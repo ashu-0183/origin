@@ -46,15 +46,21 @@
 
         h2 {
             color: #3498db;
+            margin-bottom: 5px;
         }
 
         ul {
             list-style-type: none;
             padding: 0;
+            margin: 0;
         }
 
         li {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
         }
     </style>
 </head>
@@ -89,12 +95,12 @@
 
                 const deploymentList = document.createElement('ul');
                 namespaceStatus.deploymentStatus.forEach(deployment => {
-                    deploymentList.innerHTML += `<li>${deployment.name} - Replicas: ${deployment.replicas}</li>`;
+                    deploymentList.innerHTML += `<li><strong>${deployment.name}</strong> - Replicas: ${deployment.replicas}</li>`;
                 });
 
                 const podList = document.createElement('ul');
                 namespaceStatus.podStatus.forEach(pod => {
-                    podList.innerHTML += `<li>${pod.name} - Status: ${pod.status}, Image: ${pod.containerImage}</li>`;
+                    podList.innerHTML += `<li><strong>${pod.name}</strong> - Status: ${pod.status}, Image: ${pod.containerImage}</li>`;
                 });
 
                 namespaceDiv.appendChild(deploymentList);
