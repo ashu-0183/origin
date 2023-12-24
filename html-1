@@ -49,18 +49,21 @@
             margin-bottom: 5px;
         }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
         }
 
-        li {
-            margin-bottom: 8px;
+        th, td {
             border: 1px solid #ddd;
             padding: 10px;
-            border-radius: 4px;
-            background-color: #f9f9f9;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: #fff;
         }
     </style>
 </head>
@@ -93,18 +96,22 @@
                 const namespaceDiv = document.createElement('div');
                 namespaceDiv.innerHTML = `<h2>${namespaceStatus.namespace}</h2>`;
 
-                const deploymentList = document.createElement('ul');
+                const table = document.createElement('table');
+                const tableHeader = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headerRow.innerHTML = `<th>Deployment Name</th><th>Replica Count</th><th>Pod Name</th><th>Image Tag</th><th>Pod Status</th>`;
+                tableHeader.appendChild(headerRow);
+                table.appendChild(tableHeader);
+
+                const tableBody = document.createElement('tbody');
                 namespaceStatus.deploymentStatus.forEach(deployment => {
-                    deploymentList.innerHTML += `<li><strong>${deployment.name}</strong> - Replicas: ${deployment.replicas}</li>`;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${deployment.podName}</td><td>${deployment.imageTag}</td><td>${deployment.podStatus}</td>`;
+                    tableBody.appendChild(row);
                 });
 
-                const podList = document.createElement('ul');
-                namespaceStatus.podStatus.forEach(pod => {
-                    podList.innerHTML += `<li><strong>${pod.name}</strong> - Status: ${pod.status}, Image: ${pod.containerImage}</li>`;
-                });
-
-                namespaceDiv.appendChild(deploymentList);
-                namespaceDiv.appendChild(podList);
+                table.appendChild(tableBody);
+                namespaceDiv.appendChild(table);
                 statusResults.appendChild(namespaceDiv);
             });
         }
