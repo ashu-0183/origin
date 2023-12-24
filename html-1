@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Status Dashboard</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #statusResults {
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: #3498db;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Kubernetes Status Dashboard</h1>
+
+    <label for="namespaceInput">Enter Namespace(s):</label>
+    <input type="text" id="namespaceInput" placeholder="e.g., namespace1, namespace2">
+    <button onclick="getStatus()">Get Status</button>
+
+    <div id="statusResults"></div>
+
+    <script>
+        function getStatus() {
+            const namespaceInput = document.getElementById('namespaceInput');
+            const namespaces = namespaceInput.value.split(',');
+
+            fetch(`http://localhost:8080/status?namespaces=${namespaces.join('&namespaces=')}`)
+                .then(response => response.json())
+                .then(data => displayStatus(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function displayStatus(data) {
+            const statusResults = document.getElementById('statusResults');
+            statusResults.innerHTML = '';
+
+            data.namespaceStatusList.forEach(namespaceStatus => {
+                const namespaceDiv = document.createElement('div');
+                namespaceDiv.innerHTML = `<h2>${namespaceStatus.namespace}</h2>`;
+
+                const deploymentList = document.createElement('ul');
+                namespaceStatus.deploymentStatus.forEach(deployment => {
+                    deploymentList.innerHTML += `<li>${deployment.name} - Replicas: ${deployment.replicas}</li>`;
+                });
+
+                const podList = document.createElement('ul');
+                namespaceStatus.podStatus.forEach(pod => {
+                    podList.innerHTML += `<li>${pod.name} - Status: ${pod.status}, Image: ${pod.containerImage}</li>`;
+                });
+
+                namespaceDiv.appendChild(deploymentList);
+                namespaceDiv.appendChild(podList);
+                statusResults.appendChild(namespaceDiv);
+            });
+        }
+    </script>
+
+</body>
+</html>
