@@ -64,6 +64,38 @@
         #submitBtn:hover {
             background-color: #2980b9;
         }
+
+        #statusResults {
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: #fff;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        td[data-status="running"] {
+            background-color: #27ae60;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -79,6 +111,8 @@
         <input type="text" id="namespaceInput" placeholder="e.g., namespace1, namespace2">
         <button id="submitBtn" onclick="getStatus()">Get Status</button>
     </div>
+
+    <div id="statusResults"></div>
 
     <script>
         function showNamespaceInput(domain) {
