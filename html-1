@@ -105,12 +105,18 @@
 
                 const tableBody = document.createElement('tbody');
                 namespaceStatus.deploymentStatus.forEach(deployment => {
-                    namespaceStatus.podStatus.forEach(pod => {
-                        if (pod.name.startsWith(deployment.name)) {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${pod.name}</td><td>${pod.status}</td><td>${pod.containerImage}</td>`;
-                            tableBody.appendChild(row);
-                        }
+                    const matchingPods = namespaceStatus.podStatus.filter(pod => pod.name.startsWith(deployment.name));
+
+                    if (matchingPods.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td></td><td></td><td></td>`;
+                        tableBody.appendChild(row);
+                    }
+
+                    matchingPods.forEach(pod => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${pod.name}</td><td>${pod.status}</td><td>${pod.containerImage}</td>`;
+                        tableBody.appendChild(row);
                     });
                 });
 
