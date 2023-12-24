@@ -8,10 +8,14 @@
         body {
             font-family: 'Arial', sans-serif;
             margin: 20px;
+            background-color: #f5f5f5;
         }
 
         h1 {
             color: #333;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
         }
 
         label {
@@ -34,6 +38,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
 
         button:hover {
@@ -53,6 +58,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            background-color: #fff;
         }
 
         th, td {
@@ -63,6 +69,11 @@
 
         th {
             background-color: #3498db;
+            color: #fff;
+        }
+
+        td[data-status="running"] {
+            background-color: #27ae60;
             color: #fff;
         }
     </style>
@@ -115,7 +126,7 @@
 
                     matchingPods.forEach(pod => {
                         const row = document.createElement('tr');
-                        row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${pod.name}</td><td>${pod.status}</td><td>${pod.containerImage}</td>`;
+                        row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${pod.name}</td><td data-status="${pod.status.toLowerCase()}">${pod.status}</td><td>${pod.containerImage}</td>`;
                         tableBody.appendChild(row);
                     });
                 });
