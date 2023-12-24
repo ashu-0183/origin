@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Domain Selector</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #namespaceContainer {
+            display: none;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        #submitBtn {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #submitBtn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Kubernetes Domain Selector</h1>
+
+    <button onclick="showNamespaceInput('http://localhost:8090')">Domain-A</button>
+    <button onclick="showNamespaceInput('http://localhost:8091')">Domain-B</button>
+    <button onclick="showNamespaceInput('http://localhost:8092')">Domain-C</button>
+
+    <div id="namespaceContainer">
+        <label for="namespaceInput">Enter Namespace(s):</label>
+        <input type="text" id="namespaceInput" placeholder="e.g., namespace1, namespace2">
+        <button id="submitBtn" onclick="getStatus()">Get Status</button>
+    </div>
+
+    <script>
+        function showNamespaceInput(domain) {
+            document.getElementById('namespaceContainer').style.display = 'block';
+            document.getElementById('submitBtn').onclick = function() {
+                getStatus(domain);
+            };
+        }
+
+        function getStatus(domain) {
+            const namespaceInput = document.getElementById('namespaceInput');
+            const namespaces = namespaceInput.value.split(',');
+
+            fetch(`${domain}/status?namespaces=${namespaces.join('&namespaces=')}`)
+                .then(response => response.json())
+                .then(data => displayStatus(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function displayStatus(data) {
+            const statusResults = document.getElementById('statusResults');
+            statusResults.innerHTML = '';
+
+            data.namespaceStatusList.forEach(namespaceStatus => {
+                const namespaceDiv = document.createElement('div');
+                namespaceDiv.innerHTML = `<h2>${namespaceStatus.namespace}</h2>`;
+
+                const table = document.createElement('table');
+                const tableHeader = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headerRow.innerHTML = `<th>Deployment Name</th><th>Replica Count</th><th>Pod Name</th><th>Status</th><th>Container Image</th>`;
+                tableHeader.appendChild(headerRow);
+                table.appendChild(tableHeader);
+
+                const tableBody = document.createElement('tbody');
+                namespaceStatus.deploymentStatus.forEach(deployment => {
+                    const matchingPods = namespaceStatus.podStatus.filter(pod => pod.name.startsWith(deployment.name));
+
+                    if (matchingPods.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td></td><td></td><td></td>`;
+                        tableBody.appendChild(row);
+                    }
+
+                    matchingPods.forEach(pod => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${pod.name}</td><td data-status="${pod.status.toLowerCase()}">${pod.status}</td><td>${pod.containerImage}</td>`;
+                        tableBody.appendChild(row);
+                    });
+                });
+
+                table.appendChild(tableBody);
+                namespaceDiv.appendChild(table);
+                statusResults.appendChild(namespaceDiv);
+            });
+        }
+    </script>
+
+</body>
+</html>
