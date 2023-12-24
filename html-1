@@ -99,16 +99,18 @@
                 const table = document.createElement('table');
                 const tableHeader = document.createElement('thead');
                 const headerRow = document.createElement('tr');
-                headerRow.innerHTML = `<th>Deployment Name</th><th>Replica Count</th><th>Pod Name</th><th>Image Tag</th><th>Pod Status</th>`;
+                headerRow.innerHTML = `<th>Deployment Name</th><th>Replica Count</th><th>Pod Name</th><th>Status</th><th>Container Image</th>`;
                 tableHeader.appendChild(headerRow);
                 table.appendChild(tableHeader);
 
                 const tableBody = document.createElement('tbody');
                 namespaceStatus.deploymentStatus.forEach(deployment => {
-                    deployment.podStatus.forEach(pod => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${pod.name}</td><td>${pod.containerImage}</td><td>${pod.status}</td>`;
-                        tableBody.appendChild(row);
+                    namespaceStatus.podStatus.forEach(pod => {
+                        if (pod.name.startsWith(deployment.name)) {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${pod.name}</td><td>${pod.status}</td><td>${pod.containerImage}</td>`;
+                            tableBody.appendChild(row);
+                        }
                     });
                 });
 
