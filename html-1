@@ -106,7 +106,7 @@
                 const tableBody = document.createElement('tbody');
                 namespaceStatus.deploymentStatus.forEach(deployment => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${deployment.podName}</td><td>${deployment.imageTag}</td><td>${deployment.podStatus}</td>`;
+                    row.innerHTML = `<td>${deployment.name}</td><td>${deployment.replicas}</td><td>${deployment.podStatus.name}</td><td>${deployment.podStatus.containerImage}</td><td>${deployment.podStatus.status}</td>`;
                     tableBody.appendChild(row);
                 });
 
