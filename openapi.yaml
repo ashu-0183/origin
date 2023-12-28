@@ -1,0 +1,79 @@
+openapi: 3.0.0
+info:
+  title: Kubernetes DevOps API
+  version: 1.0.0
+  description: An API for Kubernetes DevOps operations
+
+paths:
+  /status:
+    get:
+      summary: Get Kubernetes Status
+      description: Returns the status of Kubernetes namespaces and deployments.
+      parameters:
+        - name: namespaces
+          in: query
+          description: Comma-separated list of namespaces
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                namespaceStatusList:
+                  - namespace: testnamespace
+                    deploymentStatus:
+                      - name: deployment-1
+                        replicas: 0
+                    podStatus:
+                      - name: deployment-2-auto-generated-pod-id
+                        status: running
+                        containerImage: gcp.io/test/image:0.0.1
+
+components:
+  schemas:
+    StatusResponse:
+      type: object
+      properties:
+        namespaceStatusList:
+          type: array
+          items:
+            $ref: '#/components/schemas/NamespaceStatus'
+
+    NamespaceStatus:
+      type: object
+      properties:
+        namespace:
+          type: string
+        deploymentStatus:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeploymentStatus'
+        podStatus:
+          type: array
+          items:
+            $ref: '#/components/schemas/PodStatus'
+
+    DeploymentStatus:
+      type: object
+      properties:
+        name:
+          type: string
+        replicas:
+          type: integer
+
+    PodStatus:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+        containerImage:
+          type: string
