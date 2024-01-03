@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes DevOps Portal</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background: linear-gradient(to bottom, #263238, #37474f);
+            color: #fff;
+        }
+
+        h1 {
+            color: #2196f3;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2196f3;
+        }
+
+        button {
+            background-color: #2196f3;
+            color: #fff;
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1565c0;
+        }
+
+        #namespaceContainer {
+            display: none;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #2196f3;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        #submitBtn {
+            background-color: #2196f3;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #submitBtn:hover {
+            background-color: #1565c0;
+        }
+
+        #statusResults {
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: #2196f3;
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: #455a64;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        th, td {
+            border: 1px solid #607d8b;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #263238;
+            color: #fff;
+        }
+
+        td[data-status="running"] {
+            background-color: #4caf50;
+            color: #fff;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Kubernetes DevOps Portal</h1>
+
+    <button onclick="showEnvironmentInput('http://localhost:8090')">Domain-A</button>
+    <button onclick="showEnvironmentInput('http://localhost:8091')">Domain-B</button>
+    <button onclick="showEnvironmentInput('http://localhost:8092')">Domain-C</button>
+
+    <div id="namespaceContainer">
+        <label for="environmentSelect">Select Environment(s):</label>
+        <select id="environmentSelect" multiple>
+            <option value="sit">SIT</option>
+            <option value="uat">UAT</option>
+            <option value="ppd">PPD</option>
+        </select>
+        <button id="submitBtn" onclick="getStatus()">Get Status</button>
+    </div>
+
+    <div id="statusResults"></div>
+
+    <script>
+        function showEnvironmentInput(domain) {
+            document.getElementById('namespaceContainer').style.display = 'block';
+            document.getElementById('submitBtn').onclick = function() {
+                getStatus(domain);
+            };
+        }
+
+        function getStatus(domain) {
+            const environmentSelect = document.getElementById('environmentSelect');
+            const environments = Array.from(environmentSelect.selectedOptions).map(option => option.value);
+
+            fetch(`${domain}/status?environments=${environments.join(',')}`)
+                .then(response => response.json())
+                .then(data => displayStatus(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function displayStatus(data) {
+            const statusResults = document.getElementById('statusResults');
+            statusResults.innerHTML = '';
+
+            data.namespaceStatusList.forEach(namespaceStatus => {
+                const namespaceDiv = document.createElement('div');
+                namespaceDiv.innerHTML = `<h2>${namespaceStatus.namespace}</h2>`;
+
+                const table = document.createElement('table');
+                const tableHeader
