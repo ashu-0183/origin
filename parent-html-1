@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Dashboard Selection</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background: #f5f5f5; /* Light Gray Background */
+            color: #333;
+            text-align: center;
+        }
+
+        h1 {
+            color: #3498db; /* Material Blue for Heading */
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db; /* Material Blue Border for Heading */
+        }
+
+        button {
+            background-color: #3498db; /* Material Blue Background for Buttons */
+            color: #fff;
+            padding: 10px;
+            margin: 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9; /* Darker Material Blue Hover Background for Buttons */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Kubernetes Dashboard Selection</h1>
+
+    <button onclick="navigateToDashboard('devops')">DevOps Dashboard</button>
+    <button onclick="navigateToDashboard('developer')">Developer Dashboard</button>
+
+    <script>
+        function navigateToDashboard(dashboardType) {
+            if (dashboardType === 'devops') {
+                window.location.href = 'devops-dashboard.html';
+            } else if (dashboardType === 'developer') {
+                window.location.href = 'developer-dashboard.html';
+            }
+        }
+    </script>
+
+</body>
+</html>
