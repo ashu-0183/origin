@@ -1,18 +1,21 @@
 #!/bin/bash
 
+NAMESPACE="your_namespace"
+YAML_FILE="deployments.yaml"
+
 # Read deployment names from YAML file
-deployments=$(yq eval '.Deployments | .[]' deployments.yaml)
+deployments=$(yq eval '.Deployments | .[]' "$YAML_FILE")
 
 # Loop through each deployment
 for deployment in $deployments; do
     # Patch the image tag to 'latest'
-    kubectl patch deployment "$deployment" \
+    kubectl patch deployment "$deployment" -n "$NAMESPACE" \
       --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/initContainers/0/image", "value":"your_image:latest"}]'
     
     # Check if security context is present, if not, add it
-    security_context=$(kubectl get deployment "$deployment" -o=jsonpath='{.spec.template.spec.initContainers[?(@.name=="init-container")].securityContext}')
+    security_context=$(kubectl get deployment "$deployment" -n "$NAMESPACE" -o=jsonpath='{.spec.template.spec.initContainers[?(@.name=="init-container")].securityContext}')
     if [ -z "$security_context" ]; then
-        kubectl patch deployment "$deployment" \
+        kubectl patch deployment "$deployment" -n "$NAMESPACE" \
           --type='json' -p='[{"op": "add", "path": "/spec/template/spec/initContainers/0/securityContext", "value":{"runAsNonRoot": false, "runAsUser": 0}}]'
     fi
 done
