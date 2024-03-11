@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-container
+        image: my-image
+        # Add other container configurations here
+      initContainers:
+      - name: read-vault-secrets
+        image: bash
+        command: ["bash", "-c"]
+        args:
+          - |
+            # Check if the file exists
+            if [ ! -f /vault/secrets/vlt_secrets ]; then
+                echo "Warning: File /vault/secrets/vlt_secrets not found. Proceeding without setting environment variables."
+                exit 0
+            fi
+
+            # Read each line of the file
+            while IFS=":" read -r key value; do
+                # Trim leading/trailing whitespaces
+                key=$(echo "$key" | tr -d '[:space:]')
+                value=$(echo "$value" | tr -d '[:space:]')
+                
+                # Export key-value pair as environment variable
+                export "$key"="$value"
+            done < /vault/secrets/vlt_secrets
+      # Add other init containers or volumes if needed
