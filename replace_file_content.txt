@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Define the paths to the YAML files
+yaml_file="application.yaml"
+key_value_file="key_value_pairs.txt"
+
+# Read the key-value pairs from the file into an associative array
+declare -A key_value_pairs
+while IFS='=' read -r key value; do
+    key_value_pairs["$key"]="$value"
+done < "$key_value_file"
+
+# Iterate over each key-value pair in the associative array
+for key in "${!key_value_pairs[@]}"; do
+    # Escape special characters in the value
+    escaped_value=$(sed 's/[&/]/\\&/g' <<< "${key_value_pairs[$key]}")
+    # Replace the placeholder with the value in the YAML file
+    sed -i "s/\${vlt:\/\/$key}/$escaped_value/g" "$yaml_file"
+done
+
+echo "Replacement complete."
