@@ -1,0 +1,20 @@
+Git Branching Strategy
+
+Main Branch:
+
+The develop branch serves as the main branch within the Git organization. It is protected to ensure code integrity and requires review and approval from tech leads for any merge or commit.
+
+Feature Branches:
+
+Feature branches can be created from the develop branch to work on specific features or tasks. These branches should follow the naming convention feature/jiraid, where jiraid refers to the ID of the corresponding JIRA issue.
+
+Upon completion of work on a feature branch, it should be merged back into the develop branch. Before merging, ensure that the feature branch pulls the latest changes from develop to avoid conflicts.
+
+Release Branches:
+
+When a set of features for a release cycle are merged into the develop branch and validated in the development environment, a release tag is created from the develop branch. The release tag follows the naming convention release-<version>.
+
+Fix and Hotfix Branches:
+
+In case of fixes or hotfixes required after a release, a branch should be created from the release tag. These branches should be named according to the convention fix/release-<version to be fixed>-<jira id raised against the fix>. For example, fix/release-1.0.0-ABC-0000.
+
