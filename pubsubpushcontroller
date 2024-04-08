@@ -1,0 +1,38 @@
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.PubsubMessage;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
+@RestController
+public class PubSubController {
+
+    @PostMapping("/postpubsub")
+    public ResponseEntity<String> postToPubSub() {
+        try {
+            // Create a publisher instance
+            Publisher publisher = Publisher.newBuilder(topicName).build();
+
+            // Create a PubsubMessage
+            ByteString data = ByteString.copyFromUtf8("Your message data");
+            PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
+
+            // Publish the message
+            String messageId = publisher.publish(pubsubMessage).get();
+
+            // Close the publisher
+            publisher.shutdown();
+
+            // Return the message ID as the response
+            return ResponseEntity.ok("Message published with ID: " + messageId);
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            // Handle exceptions
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to publish message");
+        }
+    }
+}
