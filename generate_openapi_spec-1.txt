@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# Configuration
+GITHUB_ORG="your_organization_name"
+GITHUB_TOKEN="your_github_token"
+PREFIX="abcd-code-repo"
+
+# Function to add springdoc-openapi dependency to a Maven project
+add_springdoc_maven() {
+    if ! grep -q "springdoc-openapi" pom.xml; then
+        # Add the springdoc-openapi-maven-plugin to pom.xml
+        sed -i '/<\/dependencies>/ i \
+        <dependency>\
+            <groupId>org.springdoc</groupId>\
+            <artifactId>springdoc-openapi-ui</artifactId>\
+            <version>1.6.9</version>\
+        </dependency>' pom.xml
+
+        # Add the springdoc-openapi-maven-plugin to the build plugins
+        sed -i '/<\/plugins>/ i \
+        <plugin>\
+            <groupId>org.springframework.boot</groupId>\
+            <artifactId>spring-boot-maven-plugin</artifactId>\
+            <executions>\
+                <execution>\
+                    <goals>\
+                        <goal>repackage</goal>\
+                    </goals>\
+                </execution>\
+            </executions>\
+        </plugin>\
+        <plugin>\
+            <groupId>org.springdoc</groupId>\
+            <artifactId>springdoc-openapi-maven-plugin</artifactId>\
+            <version>1.6.9</version>\
+            <executions>\
+                <execution>\
+                    <goals>\
+                        <goal>generate</goal>\
+                    </goals>\
+                </execution>\
+            </executions>\
+        </plugin>' pom.xml
+    fi
+}
+
+# Fetch repositories from GitHub organization
+repos=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/orgs/$GITHUB_ORG/repos" | jq -r '.[].name')
+
+# Iterate through each repository
+for repo in $repos; do
+    # Check if repository name starts with the prefix
+    if [[ $repo == $PREFIX* ]]; then
+        echo "Processing repository: $repo"
+
+        # Clone the repository
+        git clone "https://github.com/$GITHUB_ORG/$repo.git"
+        cd $repo
+
+        # Check if it's a Spring Boot project (assuming a pom.xml file is present for Maven projects)
+        if [[ -f "pom.xml" ]]; then
+            echo "Spring Boot project detected. Adding springdoc-openapi dependency..."
+
+            # Add springdoc-openapi dependency
+            add_springdoc_maven
+
+            # Generate OpenAPI spec using the plugin
+            mvn clean install spring-boot:run
+
+            # Move the generated OpenAPI spec to a specific location
+            if [[ -f "target/openapi/openapi.yaml" ]]; then
+                mv target/openapi/openapi.yaml ../${repo}_openapispec.yaml
+            fi
+        else
+            echo "Not a Spring Boot project."
+        fi
+
+        # Clean up
+        cd ..
+        rm -rf $repo
+    fi
+done
+
+echo "Done processing repositories."
