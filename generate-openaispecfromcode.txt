@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Required tools: jq, curl, git, java, mvn, swagger-codegen-cli or openapi-generator-cli
+# Ensure you have these tools installed before running the script.
+
+# GitHub organization name and repository prefix
+ORG_NAME="your_org_name"
+REPO_PREFIX="abcd-code-repo"
+
+# GitHub personal access token (replace with your token)
+GITHUB_TOKEN="your_github_token"
+
+# Base URL for GitHub API
+GITHUB_API_URL="https://api.github.com"
+
+# Function to get all repositories in the organization
+get_repos() {
+  curl -s -H "Authorization: token $GITHUB_TOKEN" "$GITHUB_API_URL/orgs/$ORG_NAME/repos?per_page=100" | jq -r '.[] | .name'
+}
+
+# Function to check if the repository contains Spring Boot code
+contains_springboot_code() {
+  local repo=$1
+  grep -rq "spring-boot-starter" "$repo/pom.xml"
+}
+
+# Function to generate OpenAPI specification
+generate_openapi_spec() {
+  local repo=$1
+  local api_spec_file="${repo}_openapi.yaml"
+
+  # Change directory to the cloned repository
+  cd "$repo" || exit
+
+  # Use springdoc-openapi-maven-plugin to generate OpenAPI spec (assuming Spring Boot project with Maven)
+  mvn clean install
+  mvn springdoc-openapi:generate
+
+  # Move the generated OpenAPI spec to the root directory
+  mv target/openapi.yaml ../"$api_spec_file"
+
+  # Move back to the original directory
+  cd ..
+}
+
+# Main script execution
+main() {
+  # Get all repositories in the organization
+  repos=$(get_repos)
+
+  # Loop through each repository
+  for repo in $repos; do
+    # Check if the repository name starts with the specified prefix
+    if [[ $repo == $REPO_PREFIX* ]]; then
+      echo "Processing repository: $repo"
+
+      # Clone the repository
+      git clone "https://github.com/$ORG_NAME/$repo.git"
+
+      # Check if the repository contains Spring Boot code
+      if contains_springboot_code "$repo"; then
+        echo "Repository $repo contains Spring Boot code."
+
+        # Generate OpenAPI specification for the repository
+        generate_openapi_spec "$repo"
+        echo "OpenAPI specification generated for repository $repo."
+
+      else
+        echo "Repository $repo does not contain Spring Boot code."
+      fi
+
+      # Cleanup cloned repository
+      rm -rf "$repo"
+    fi
+  done
+}
+
+# Execute the main function
+main
+
+≈==================
+
+<plugin>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-maven-plugin</artifactId>
+    <version>1.3.9</version>
+    <executions>
+        <execution>
+            <id>generate-openapi-doc</id>
+            <goals>
+                <goal>generate</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
