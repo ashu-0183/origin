@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Source Nexus Repository details
+SOURCE_NEXUS_URL="http://source-nexus-repo.com"
+SOURCE_REPO="source-repo"
+GROUP_ID="com.example"
+ARTIFACT_ID="example-artifact"
+VERSION="1.0.0"
+ARTIFACT_EXTENSION="jar"
+
+# Target Nexus Repository details
+TARGET_NEXUS_URL="http://target-nexus-repo.com"
+TARGET_REPO="target-repo"
+TARGET_GROUP_ID="com.example"
+TARGET_ARTIFACT_ID="example-artifact"
+TARGET_VERSION="1.0.0"
+
+# Credentials for source and target Nexus repositories
+SOURCE_NEXUS_USER="source_user"
+SOURCE_NEXUS_PASS="source_pass"
+TARGET_NEXUS_USER="target_user"
+TARGET_NEXUS_PASS="target_pass"
+
+# Construct the path to the artifact
+ARTIFACT_PATH=$(echo $GROUP_ID | sed 's/\./\//g')/$ARTIFACT_ID/$VERSION/$ARTIFACT_ID-$VERSION.$ARTIFACT_EXTENSION
+
+# Download the artifact from the source Nexus repository
+echo "Downloading artifact from $SOURCE_NEXUS_URL..."
+curl -u $SOURCE_NEXUS_USER:$SOURCE_NEXUS_PASS -O $SOURCE_NEXUS_URL/repository/$SOURCE_REPO/$ARTIFACT_PATH
+
+if [ $? -ne 0 ]; then
+  echo "Failed to download the artifact from $SOURCE_NEXUS_URL"
+  exit 1
+fi
+
+# Upload the artifact to the target Nexus repository
+echo "Uploading artifact to $TARGET_NEXUS_URL..."
+curl -u $TARGET_NEXUS_USER:$TARGET_NEXUS_PASS \
+  --upload-file $ARTIFACT_ID-$VERSION.$ARTIFACT_EXTENSION \
+  $TARGET_NEXUS_URL/repository/$TARGET_REPO/$(echo $TARGET_GROUP_ID | sed 's/\./\//g')/$TARGET_ARTIFACT_ID/$TARGET_VERSION/$TARGET_ARTIFACT_ID-$TARGET_VERSION.$ARTIFACT_EXTENSION
+
+if [ $? -ne 0 ]; then
+  echo "Failed to upload the artifact to $TARGET_NEXUS_URL"
+  exit 1
+fi
+
+echo "Artifact migration completed successfully!"
