@@ -1,0 +1,69 @@
+artifacts:
+  - groupId: "com.example"
+    artifactId: "example-artifact"
+    version: "1.0.0"
+    extension: "jar"
+  - groupId: "org.sample"
+    artifactId: "sample-artifact"
+    version: "2.1.3"
+    extension: "jar"
+
+
+
+#!/bin/bash
+
+# Input YAML file with artifact details
+ARTIFACTS_FILE="artifacts.yaml"
+
+# Source Nexus Repository details
+SOURCE_NEXUS_URL="http://source-nexus-repo.com"
+SOURCE_REPO="source-repo"
+
+# Target Nexus Repository details
+TARGET_NEXUS_URL="http://target-nexus-repo.com"
+TARGET_REPO="target-repo"
+
+# Credentials for source and target Nexus repositories
+SOURCE_NEXUS_USER="source_user"
+SOURCE_NEXUS_PASS="source_pass"
+TARGET_NEXUS_USER="target_user"
+TARGET_NEXUS_PASS="target_pass"
+
+# Read the YAML file and loop through each artifact
+yq eval '.artifacts[]' "$ARTIFACTS_FILE" | while IFS= read -r artifact; do
+    # Extract the groupId, artifactId, version, and extension from the artifact details
+    GROUP_ID=$(echo "$artifact" | yq eval '.groupId' -)
+    ARTIFACT_ID=$(echo "$artifact" | yq eval '.artifactId' -)
+    VERSION=$(echo "$artifact" | yq eval '.version' -)
+    EXTENSION=$(echo "$artifact" | yq eval '.extension' -)
+    
+    # Construct the path to the artifact in the source Nexus repository
+    ARTIFACT_PATH=$(echo $GROUP_ID | sed 's/\./\//g')/$ARTIFACT_ID/$VERSION/$ARTIFACT_ID-$VERSION.$EXTENSION
+
+    # Download the artifact from the source Nexus repository
+    echo "Downloading artifact $ARTIFACT_ID-$VERSION.$EXTENSION from $SOURCE_NEXUS_URL..."
+    curl -u $SOURCE_NEXUS_USER:$SOURCE_NEXUS_PASS -O $SOURCE_NEXUS_URL/repository/$SOURCE_REPO/$ARTIFACT_PATH
+
+    if [ $? -ne 0 ]; then
+      echo "Failed to download the artifact $ARTIFACT_ID-$VERSION.$EXTENSION from $SOURCE_NEXUS_URL"
+      exit 1
+    fi
+
+    # Upload the artifact to the target Nexus repository
+    echo "Uploading artifact $ARTIFACT_ID-$VERSION.$EXTENSION to $TARGET_NEXUS_URL..."
+    curl -u $TARGET_NEXUS_USER:$TARGET_NEXUS_PASS \
+      --upload-file $ARTIFACT_ID-$VERSION.$EXTENSION \
+      $TARGET_NEXUS_URL/repository/$TARGET_REPO/$(echo $GROUP_ID | sed 's/\./\//g')/$ARTIFACT_ID/$VERSION/$ARTIFACT_ID-$VERSION.$EXTENSION
+
+    if [ $? -ne 0 ]; then
+      echo "Failed to upload the artifact $ARTIFACT_ID-$VERSION.$EXTENSION to $TARGET_NEXUS_URL"
+      exit 1
+    fi
+
+    # Clean up the downloaded artifact
+    rm $ARTIFACT_ID-$VERSION.$EXTENSION
+
+    echo "Artifact $ARTIFACT_ID-$VERSION.$EXTENSION migration completed successfully!"
+done
+
+echo "All artifacts have been migrated."
