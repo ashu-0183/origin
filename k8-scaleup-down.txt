@@ -1,0 +1,68 @@
+#!/bin/bash
+
+NAMESPACE=$1
+ENV=$2
+ROLLBACK=$3
+BACKUP_FILE="deployments_backup_$NAMESPACE_$ENV.txt"
+
+if [[ -z "$NAMESPACE" || -z "$ENV" ]]; then
+    echo "Usage: $0 <namespace> <environment> [--rollback]"
+    exit 1
+fi
+
+function scale_down() {
+    echo "Scaling down deployments in namespace $NAMESPACE with more than 1 replica..."
+
+    # Create/overwrite the backup file
+    > $BACKUP_FILE
+
+    # Get all deployments in the namespace with more than 1 replica
+    DEPLOYMENTS=$(kubectl get deployments -n "$NAMESPACE" --field-selector=status.replicas>1 -o=jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+
+    for DEPLOY in $DEPLOYMENTS; do
+        # Get the current replica count
+        REPLICAS=$(kubectl get deployment "$DEPLOY" -n "$NAMESPACE" -o=jsonpath='{.spec.replicas}')
+
+        # Backup the current state (deployment name and replica count)
+        echo "$DEPLOY $REPLICAS" >> "$BACKUP_FILE"
+
+        # Scale down the deployment to 1
+        echo "Scaling down $DEPLOY from $REPLICAS replicas to 1"
+        kubectl scale deployment "$DEPLOY" --replicas=1 -n "$NAMESPACE"
+
+        # Update the HPA minimum replicas to 1
+        HPA_NAME="$DEPLOY-hpa-$ENV"
+        echo "Updating HPA $HPA_NAME to set minReplicas to 1"
+        kubectl patch hpa "$HPA_NAME" -n "$NAMESPACE" --patch '{"spec": {"minReplicas": 1}}'
+    done
+
+    echo "Scaling down completed. Backup saved to $BACKUP_FILE"
+}
+
+function rollback() {
+    if [[ ! -f "$BACKUP_FILE" ]]; then
+        echo "Backup file not found! Cannot rollback."
+        exit 1
+    fi
+
+    echo "Rolling back deployments to their previous replica counts..."
+
+    # Read from the backup file
+    while read -r DEPLOY REPLICAS; do
+        echo "Scaling $DEPLOY back to $REPLICAS replicas"
+        kubectl scale deployment "$DEPLOY" --replicas="$REPLICAS" -n "$NAMESPACE"
+
+        # Update the HPA minimum replicas accordingly
+        HPA_NAME="$DEPLOY-hpa-$ENV"
+        echo "Updating HPA $HPA_NAME to set minReplicas back to $REPLICAS"
+        kubectl patch hpa "$HPA_NAME" -n "$NAMESPACE" --patch "{\"spec\": {\"minReplicas\": $REPLICAS}}"
+    done < "$BACKUP_FILE"
+
+    echo "Rollback completed."
+}
+
+if [[ "$ROLLBACK" == "--rollback" ]]; then
+    rollback
+else
+    scale_down
+fi
