@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# Function to download artifact from source registry
+download_artifact() {
+  local groupId=$1
+  local artifactId=$2
+  local version=$3
+  local packagingType=$4
+  local nexusUrl=$5
+
+  # Replace dots with slashes in groupId
+  groupPath=$(echo "$groupId" | tr '.' '/')
+
+  # Construct URL to download the artifact
+  downloadUrl="${nexusUrl}/repository/maven-releases/${groupPath}/${artifactId}/${version}/${artifactId}-${version}.${packagingType}"
+
+  echo "Downloading ${artifactId}-${version}.${packagingType} from ${downloadUrl}..."
+  wget -q $downloadUrl -O ${artifactId}-${version}.${packagingType}
+
+  if [ $? -eq 0 ]; then
+    echo "Artifact downloaded: ${artifactId}-${version}.${packagingType}"
+  else
+    echo "Failed to download artifact: ${artifactId}-${version}.${packagingType}"
+    exit 1
+  fi
+}
+
+# Function to upload artifact to target registry
+upload_artifact() {
+  local groupId=$1
+  local artifactId=$2
+  local version=$3
+  local packagingType=$4
+  local nexusUrl=$5
+
+  # Replace dots with slashes in groupId
+  groupPath=$(echo "$groupId" | tr '.' '/')
+
+  # Construct URL for uploading artifact
+  uploadUrl="${nexusUrl}/repository/maven-releases/${groupPath}/${artifactId}/${version}/"
+  file="${artifactId}-${version}.${packagingType}"
+
+  echo "Uploading ${file} to ${uploadUrl}..."
+  curl -u $NEXUS_USERNAME:$NEXUS_PASSWORD --upload-file $file "${uploadUrl}"
+
+  if [ $? -eq 0 ]; then
+    echo "Artifact uploaded: ${file}"
+  else
+    echo "Failed to upload artifact: ${file}"
+    exit 1
+  fi
+}
+
+# Function to process each artifact in the yaml file
+process_artifact() {
+  local artifact=$1
+
+  echo "Processing artifact: $artifact"
+
+  # Extract source details
+  source_groupId=$(yq eval ".${artifact}.source.groupId" artifacts.yaml)
+  source_artifactId=$(yq eval ".${artifact}.source.artifactId" artifacts.yaml)
+  source_version=$(yq eval ".${artifact}.source.version" artifacts.yaml)
+  source_packagingType=$(yq eval ".${artifact}.source.packagingType" artifacts.yaml)
+
+  # Extract target details
+  target_groupId=$(yq eval ".${artifact}.target.groupId" artifacts.yaml)
+  target_artifactId=$(yq eval ".${artifact}.target.artifactId" artifacts.yaml)
+  target_version=$(yq eval ".${artifact}.target.version" artifacts.yaml)
+  target_packagingType=$(yq eval ".${artifact}.target.packagingType" artifacts.yaml)
+
+  # Source Nexus registry URL
+  source_nexus_url="http://source-nexus-repo-url"
+
+  # Target Nexus registry URL
+  target_nexus_url="http://target-nexus-repo-url"
+
+  # Download artifact from source
+  download_artifact "$source_groupId" "$source_artifactId" "$source_version" "$source_packagingType" "$source_nexus_url"
+
+  # Upload artifact to target
+  upload_artifact "$target_groupId" "$target_artifactId" "$target_version" "$target_packagingType" "$target_nexus_url"
+}
+
+# Iterate through the artifacts in the yaml file
+artifacts=$(yq eval 'keys | .[]' artifacts.yaml)
+
+for artifact in $artifacts; do
+  process_artifact $artifact
+done
