@@ -1,0 +1,70 @@
+Given your extensive accomplishments and responsibilities, here’s a structured and impactful year-end review draft based on the information you provided. This format organizes the content by highlighting core responsibilities and achievements, with specific attention to the impact and value of each:
+
+---
+
+### Year-End Review
+
+**Position**: Senior DevOps Consultant & Lead for Horizontal Team  
+**Scope**: Supporting 12 diverse projects with end-to-end DevOps solutions, CI/CD automation, and SRE support.
+
+#### Core Responsibilities
+
+In my role, I lead a horizontal team providing comprehensive DevOps and platform automation support for 12 projects. My day-to-day responsibilities include:
+- Supporting development and testing teams with CI/CD automation and production releases.
+- Managing, maintaining, and troubleshooting DevOps pipelines and GCP infrastructure.
+- Collaborating with Platform and SRE teams to optimize system reliability and scalability.
+
+In addition to these daily responsibilities, I’ve taken ownership of several key initiatives this year, delivering impactful solutions that have enhanced security, automation, and deployment efficiency across multiple domains.
+
+---
+
+#### Key Achievements and Initiatives
+
+1. **Enhanced Security and Compliance**:
+   - **Cloud Armor Implementation**: Rolled out Cloud Armor 3.3 and enterprise rules across all external GCP projects, covering both production and non-production environments. Supported teams in validating and adjusting for security compliance, reducing vulnerabilities by minimizing false positives.
+   - **IT Compliance Engine (ICE) Automation**: Developed automation for ICE across Open Digital projects, ensuring consistent and streamlined compliance checks.
+   - **Mode-2 Compliance Controls**: Established Mode-2 compliance processes for hundreds of change requests across various domains, creating structured controls that ensure adherence to regulatory requirements.
+
+2. **Advancing DevOps Automation**:
+   - **Multi-Repo Support for DevOps Pipelines**: Enhanced our automation capabilities to support diverse Git repository structures, accommodating both code-config in separate and unified branches.
+   - **Vault Secret Automation**: Automated the process for creating secrets in Vault, enhancing security protocols and streamlining secure data management.
+   - **Branch Protection Automation**: Developed an automation solution for configuring branch protection across 500+ Git repositories, completing the task within 30-40 minutes, thus significantly improving our codebase security practices.
+
+3. **Accelerating Project Onboarding and Deployment**:
+   - **Project Onboarding Acceleration**: Reduced onboarding time to just 1-2 days, guiding new projects and teams seamlessly from setup through to production deployment.
+   - **HSBCnet Production Release Automation**: Created automation solutions for HSBCnet teams, enabling expedited production releases with standard snapshot testing.
+   - **Node.js Application Deployment Pipeline**: Designed an internal MFE deployment pipeline and Docker solution, successfully testing end-to-end connectivity and deployment for internal applications.
+
+4. **Platform and Infrastructure Automation**:
+   - **Infrastructure Rebuild Pipeline**: Automated key infrastructure rebuild activities, reducing downtime and manual intervention.
+   - **IKP Deployment Solution**: Delivered a comprehensive solution for on-premises IKP (internal Kubernetes clusters), from design through to implementation, enhancing our platform's flexibility and scalability.
+   - **Fallback Pipelines and Branching Strategies**: Created robust fallback pipelines and branching strategies for our DevOps team, improving system reliability and response during production issues.
+
+5. **Cross-Regional and Multi-Domain Deployments**:
+   - **Cross-Region Proxy for Mandate**: Developed a proxy solution to enable FQDN reuse across regions, optimizing network utilization and resource allocation.
+   - **Kong Proxy Automation**: Automated Kong proxy deployment for the Malaysia TPT domain, standardizing processes and reducing deployment time.
+   - **Kong Shared Library Analysis**: Conducted reverse engineering on Kong’s shared libraries to recommend improvements, enhancing flexibility in path and route configurations for proxy deployments.
+
+6. **Driving Efficiency in Complex Configurations**:
+   - **Micro-Frontend (MFE) Config Deployment**: Built and deployed an MFE configuration solution that decoupled release schedules from quarterly to daily or weekly, significantly improving deployment frequency.
+   - **Git Repository Refactoring**: Created automation to update and restructure 500+ repositories, reducing manual workload and improving repository organization.
+   - **AI Deployment Automation**: Supported architecture teams in automating AI job deployments, enabling successful proof-of-concept execution.
+
+7. **Risk Management and Production Stability**:
+   - **Risk Identification and RCA for Infra Code**: Conducted a thorough root cause analysis on infrastructure code, identifying potential risks and implementing preventive branching controls.
+   - **Production Deployment Controls for MFE**: Developed a production wrapper pipeline with built-in controls to mitigate identified risks in MFE deployments.
+
+8. **Empowering Teams through Cross-Skilling**:
+   - **Cross-Skilling DevOps and Development Teams**: Provided in-depth training for DevOps and development teams, enabling them to independently resolve complex automation and Kubernetes-related issues.
+
+---
+
+### Summary
+
+Throughout this year, I have successfully led key initiatives that strengthened our DevOps automation framework, enhanced security compliance, and streamlined cross-team deployment processes. Each project has contributed to more efficient, secure, and resilient DevOps practices, significantly benefiting the teams and the broader organization.
+
+Looking forward, I aim to continue developing scalable solutions and deepen cross-team collaboration to maintain high standards in DevOps excellence and innovation.
+
+--- 
+
+This format presents your work in a structured way that’s easy to follow and highlights the positive impacts of each achievement. Let me know if there’s anything specific you’d like to add or adjust!
