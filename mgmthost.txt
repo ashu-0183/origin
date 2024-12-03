@@ -1,0 +1,123 @@
+Here’s the content formatted with appropriate indentation for direct copying into Confluence:
+
+---
+
+## Management Host Configuration for Kubernetes Deployment
+
+This page provides detailed steps to procure and configure a management host (Unix server) for Kubernetes deployment using Ansible Tower.
+
+### 1. Procuring Management Hosts
+#### 1.1 Obtain Non-Prod and Prod Servers
+- Teams must procure separate Unix servers for non-production and production environments.  
+- Ensure the servers meet the required specifications, including:  
+  - Minimum CPU, memory, and disk space as per deployment needs.  
+  - Network connectivity with Kubernetes clusters and Ansible Tower.  
+
+#### 1.2 Request Unix User Creation
+- Submit a request to the server administrators to create a Unix user on both non-prod and prod servers.  
+- Specify the following requirements:  
+  - **User Name**: Provide a standardized username (e.g., `k8s_deployer`).  
+  - **Permissions**: Ensure the user has sufficient privileges to:  
+    - Install and manage required tools.  
+    - SSH into the server.  
+    - Run Kubernetes, Helm, and Gcloud commands.  
+
+### 2. Install Required Tools on Management Host
+#### 2.1 Tools to be Installed
+The following tools are necessary for Kubernetes deployment:  
+1. **jq**: JSON processor for parsing outputs.  
+2. **kubectl**: Kubernetes command-line tool.  
+3. **Helm**: Kubernetes package manager.  
+4. **Google Cloud SDK**: CLI for interacting with GCP resources.  
+
+#### 2.2 Installation Steps
+1. **Install jq**:
+   ```bash
+   sudo apt-get install jq   # For Debian/Ubuntu  
+   sudo yum install jq       # For RHEL/CentOS  
+   ```
+2. **Install kubectl**:
+   ```bash
+   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"  
+   chmod +x kubectl  
+   sudo mv kubectl /usr/local/bin/  
+   ```
+3. **Install Helm**:
+   ```bash
+   curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash  
+   ```
+4. **Install Google Cloud SDK**:
+   - Follow the official [Gcloud SDK installation guide](https://cloud.google.com/sdk/docs/install).  
+   - Example for Debian/Ubuntu:
+     ```bash
+     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list  
+     sudo apt-get install apt-transport-https ca-certificates -y  
+     sudo apt-get update && sudo apt-get install google-cloud-sdk -y  
+     ```
+
+### 3. Configure Private Key-Based SSH for Ansible Tower
+#### 3.1 Generate SSH Keys
+1. On the management host, log in as the Unix user:  
+   ```bash
+   ssh user@management-host  
+   ```
+2. Generate an SSH key pair:  
+   ```bash
+   ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa  
+   ```
+   - Save the key as `id_rsa` in the default directory.  
+   - Leave the passphrase empty for non-interactive SSH by Ansible Tower.  
+
+#### 3.2 Add Public Key to Authorized Keys
+1. Copy the public key (`~/.ssh/id_rsa.pub`) on the management host.  
+2. Add it to the `authorized_keys` file for the Unix user:  
+   ```bash
+   cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys  
+   chmod 600 ~/.ssh/authorized_keys  
+   ```
+
+#### 3.3 Add Private Key to Ansible Tower
+1. Navigate to **Credentials** in Ansible Tower and click **Add (+)**.  
+2. Create a new **Machine Credential**:  
+   - **Name**: Provide a name (e.g., *Mgmt Host SSH Credential*).  
+   - **Credential Type**: Select **Machine**.  
+   - **SSH Private Key**: Copy the content of the private key (`~/.ssh/id_rsa`) from the management host and paste it into this field.  
+   - Save the credential.  
+
+#### 3.4 Test SSH Connectivity
+1. From Ansible Tower, use the **Test Host Connection** feature to verify SSH access:  
+   - Navigate to the **Hosts** in your inventory.  
+   - Use the **Run Command** option to test connectivity.  
+2. Alternatively, manually test SSH access from Ansible Tower to the management host:  
+   ```bash
+   ssh -i /path/to/private/key user@management-host  
+   ```
+
+### 4. Validate Management Host Configuration
+1. Log in as the Unix user and verify tool installations:
+   ```bash
+   jq --version  
+   kubectl version --client  
+   helm version  
+   gcloud version  
+   ```
+2. Ensure the private key allows seamless SSH access from Ansible Tower.  
+3. Verify the management host can interact with the Kubernetes cluster:  
+   - Authenticate with `kubectl` using the cluster credentials:  
+     ```bash
+     kubectl get nodes  
+     ```
+   - Authenticate with GCP using `gcloud` (if applicable):  
+     ```bash
+     gcloud auth login  
+     ```
+
+### 5. Best Practices
+- Use separate SSH keys for non-prod and prod environments.  
+- Restrict SSH access to management hosts using firewalls or security groups.  
+- Regularly update installed tools to their latest versions.  
+- Use a configuration management tool (e.g., Ansible, Puppet, or Chef) to standardize and automate host setup.  
+
+---
+
+This text can now be directly copied and pasted into Confluence with proper formatting and indentation.
