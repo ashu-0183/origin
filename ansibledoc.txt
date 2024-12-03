@@ -1,0 +1,137 @@
+## **Setting up Kubernetes Deployment using Ansible Tower and a Management Host**
+
+### **Prerequisites**
+1. Access to Ansible Tower (or AWX) with admin privileges.
+2. A management host configured for SSH access.
+3. A Git repository containing the necessary Ansible playbooks for Kubernetes deployment.
+4. Credentials for:
+   - Source control (Git)
+   - Machine credentials for SSH access to the management host
+   - Vault password for decrypting Ansible Vault-encrypted files (if any)
+
+---
+
+### **1. Onboard Onto Ansible Tower**
+
+#### **1.1 Create an Organization**
+1. Log in to Ansible Tower.
+2. Navigate to **Organizations** from the left-hand menu.
+3. Click **Add (+)** to create a new organization.
+   - **Name**: Provide a meaningful name (e.g., *K8s Deployment Org*).
+   - Save the organization.
+
+---
+
+#### **1.2 Create an Inventory**
+1. Navigate to **Inventories** in the left-hand menu.
+2. Click **Add (+)** to create a new inventory.
+   - **Name**: Provide a name for the inventory (e.g., *K8s Management Inventory*).
+   - **Organization**: Select the previously created organization.
+   - Save the inventory.
+
+---
+
+#### **1.3 Add Management Host to the Inventory**
+1. Open the inventory you just created.
+2. Go to the **Hosts** tab.
+3. Click **Add (+)** to add a new host.
+   - **Hostname**: Enter the hostname or IP address of the management host.
+   - **Variables**: Add any host-specific variables if required.
+   - Save the host.
+
+---
+
+### **2. Create a Project**
+
+#### **2.1 Ensure Playbook Availability in Git**
+- Confirm that your Ansible playbooks for Kubernetes deployment are pushed to a Git repository.
+- Example structure of the repository:
+  ```
+  ├── playbooks/
+  │   ├── deploy_k8s.yml
+  │   ├── tasks/
+  │   │   ├── create_namespace.yml
+  │   │   ├── deploy_app.yml
+  ├── inventory/
+  │   ├── hosts.ini
+  └── group_vars/
+      └── all.yml
+  ```
+
+#### **2.2 Add Source Control Credentials**
+1. Navigate to **Credentials** in Ansible Tower.
+2. Click **Add (+)** to create a new credential.
+   - **Name**: Provide a name (e.g., *Git Credential*).
+   - **Credential Type**: Select **Source Control**.
+   - **Organization**: Select your organization.
+   - **Details**: Add Git repository authentication details (username, password, or SSH key).
+   - Save the credential.
+
+#### **2.3 Create the Project**
+1. Navigate to **Projects** in the left-hand menu.
+2. Click **Add (+)** to create a new project.
+   - **Name**: Provide a name for the project (e.g., *K8s Deployment Project*).
+   - **Organization**: Select your organization.
+   - **Source Control Type**: Select **Git**.
+   - **Source Control URL**: Provide the Git repository URL.
+   - **Credentials**: Select the source control credential created earlier.
+   - Save the project.
+
+---
+
+### **3. Create a Job Template**
+
+#### **3.1 Add Machine Credentials**
+1. Navigate to **Credentials** and click **Add (+)**.
+2. Configure the machine credential:
+   - **Name**: Provide a name (e.g., *Mgmt Host SSH*).
+   - **Credential Type**: Select **Machine**.
+   - **Organization**: Select your organization.
+   - **Username/SSH Key**: Provide SSH details to connect to the management host.
+   - Save the credential.
+
+#### **3.2 Add Vault Credentials**
+1. Navigate to **Credentials** and click **Add (+)**.
+2. Configure the vault credential:
+   - **Name**: Provide a name (e.g., *Vault Decrypt Key*).
+   - **Credential Type**: Select **Vault**.
+   - **Organization**: Select your organization.
+   - **Vault Password**: Enter the vault password.
+   - Save the credential.
+
+#### **3.3 Create the Job Template**
+1. Navigate to **Job Templates** and click **Add (+)**.
+2. Configure the template:
+   - **Name**: Provide a name (e.g., *Deploy Kubernetes*).
+   - **Job Type**: Select **Run**.
+   - **Inventory**: Select the inventory created earlier.
+   - **Project**: Select the project created earlier.
+   - **Playbook**: Select the specific playbook for Kubernetes deployment (e.g., `deploy_k8s.yml`).
+   - **Credentials**:
+     - Add **Machine** credential for SSH access to the management host.
+     - Add **Vault** credential for decrypting encrypted files (if applicable).
+   - **Extra Variables**: Add any required variables for playbook execution (ensure sensitive data is encrypted if possible).
+   - Save the template.
+
+---
+
+### **4. Execute the Job Template**
+1. Navigate to the job template created above.
+2. Click the **Launch** button to execute the template.
+3. Monitor the execution logs for status and resolve any issues as they arise.
+
+---
+
+### **5. Validate Deployment**
+1. Once the job completes successfully, verify the Kubernetes deployment:
+   - Check the management host for playbook execution logs.
+   - Use `kubectl` commands to validate the deployment in the Kubernetes cluster.
+
+---
+
+### **Best Practices**
+- Encrypt sensitive data using **Ansible Vault**.
+- Test playbooks in a staging environment before running them in production.
+- Use version control for Ansible playbooks to manage changes effectively.
+
+--- 
