@@ -25,6 +25,14 @@ SCHEMA = [
     bigquery.SchemaField("target_end_date", "TIMESTAMP", mode="NULLABLE"),
     bigquery.SchemaField("due_date", "TIMESTAMP", mode="NULLABLE"),
     bigquery.SchemaField("sprint", "STRING", mode="REPEATED"),
+    bigquery.SchemaField("sprint", "RECORD", mode="REPEATED", fields=[
+    bigquery.SchemaField("name", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("state", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("goal", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("start_date", "TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField("end_date", "TIMESTAMP", mode="NULLABLE"),
+])
+
     bigquery.SchemaField("subtask", "RECORD", mode="REPEATED", fields=[
         bigquery.SchemaField("original_estimate", "INTEGER", mode="NULLABLE"),
         bigquery.SchemaField("logged_hours", "INTEGER", mode="NULLABLE"),
