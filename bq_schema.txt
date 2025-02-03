@@ -1,0 +1,64 @@
+from google.cloud import bigquery
+
+# Set your BigQuery project and dataset details
+PROJECT_ID = "your-gcp-project-id"
+DATASET_ID = "your_dataset_id"
+TABLE_ID = "your_table_id"
+
+# Define the schema for the Jira data table
+SCHEMA = [
+    bigquery.SchemaField("key", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("summary", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("status", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("created", "TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField("epic_link", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("story_points", "INTEGER", mode="NULLABLE"),
+    bigquery.SchemaField("assignee", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("resolution", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("resolution_date", "TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField("issue_type", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("fix_version", "STRING", mode="REPEATED"),
+    bigquery.SchemaField("components", "STRING", mode="REPEATED"),
+    bigquery.SchemaField("labels", "STRING", mode="REPEATED"),
+    bigquery.SchemaField("priority", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("start_date", "TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField("target_end_date", "TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField("due_date", "TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField("sprint", "STRING", mode="REPEATED"),
+    bigquery.SchemaField("subtask", "RECORD", mode="REPEATED", fields=[
+        bigquery.SchemaField("original_estimate", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("logged_hours", "INTEGER", mode="NULLABLE"),
+    ]),
+    bigquery.SchemaField("linked_issues", "RECORD", mode="REPEATED", fields=[
+        bigquery.SchemaField("linked_type", "STRING", mode="NULLABLE"),
+    ]),
+    bigquery.SchemaField("changelog", "RECORD", mode="REPEATED", fields=[
+        bigquery.SchemaField("history", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("author", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("timestamp", "TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField("status_change_time", "TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField("field", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("from_status", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("to_status", "STRING", mode="NULLABLE"),
+    ]),
+]
+
+def create_bigquery_table():
+    """Creates a BigQuery table with the specified schema if it does not exist."""
+    client = bigquery.Client(project=PROJECT_ID)
+    dataset_ref = client.dataset(DATASET_ID)
+    table_ref = dataset_ref.table(TABLE_ID)
+
+    try:
+        # Check if table exists
+        client.get_table(table_ref)
+        print(f"Table `{DATASET_ID}.{TABLE_ID}` already exists.")
+    
+    except Exception:
+        # Create table since it does not exist
+        table = bigquery.Table(table_ref, schema=SCHEMA)
+        client.create_table(table)
+        print(f"Table `{DATASET_ID}.{TABLE_ID}` created successfully.")
+
+if __name__ == "__main__":
+    create_bigquery_table()
