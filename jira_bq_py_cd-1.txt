@@ -1,0 +1,124 @@
+import requests
+import json
+import os
+from google.cloud import bigquery
+from dateutil import parser
+
+# Set up Jira API authentication
+JIRA_URL = "https://your-jira-instance.atlassian.net/rest/api/2/search"
+JIRA_AUTH = ("your-email@example.com", "your-api-token")
+
+# Define Jira JQL query for project 'PE'
+PROJECT_KEY = "PE"
+MAX_RESULTS_PER_PAGE = 100  # Limit per API call
+PAGE_LIMIT = 2  # Restrict pages for now
+
+# BigQuery client & table details
+BQ_PROJECT = "your-gcp-project"
+BQ_DATASET = "your_bigquery_dataset"
+BQ_TABLE = "your_bigquery_table"
+
+client = bigquery.Client()
+
+# Function to fetch Jira issues with pagination
+def fetch_jira_issues():
+    all_issues = []
+    start_at = 0
+    page_count = 0
+
+    while True:
+        if page_count >= PAGE_LIMIT:
+            break  # Stop fetching after PAGE_LIMIT pages
+
+        query_params = {
+            "jql": f"project={PROJECT_KEY}",
+            "startAt": start_at,
+            "maxResults": MAX_RESULTS_PER_PAGE,
+            "fields": ["summary", "status", "created", "customfield_10020",  # Sprint
+                       "customfield_10014",  # Epic Link
+                       "customfield_10028",  # Story Points
+                       "assignee", "resolution", "resolutiondate"]
+        }
+
+        response = requests.get(JIRA_URL, auth=JIRA_AUTH, params=query_params)
+        data = response.json()
+
+        issues = data.get("issues", [])
+        if not issues:
+            break  # No more issues to fetch
+
+        all_issues.extend(issues)
+        start_at += MAX_RESULTS_PER_PAGE
+        page_count += 1
+
+    return all_issues
+
+# Function to transform and prepare data for BigQuery
+def transform_issues(issues):
+    transformed_rows = []
+
+    for issue in issues:
+        # Extract Sprint Details
+        sprint_details = []
+        sprint_data = issue.get("fields", {}).get("customfield_10020", [])  # Sprint field
+
+        if sprint_data:
+            for sprint in sprint_data:
+                sprint_info = {}
+                sprint_parts = sprint.split(",")  # Jira provides sprint info as a comma-separated string
+
+                for part in sprint_parts:
+                    if "name=" in part:
+                        sprint_info["name"] = part.split("=")[1].strip()
+                    elif "state=" in part:
+                        sprint_info["state"] = part.split("=")[1].strip()
+                    elif "goal=" in part:
+                        sprint_info["goal"] = part.split("=")[1].strip()
+                    elif "startDate=" in part:
+                        sprint_info["start_date"] = parser.parse(part.split("=")[1].strip()).isoformat()
+                    elif "endDate=" in part:
+                        sprint_info["end_date"] = parser.parse(part.split("=")[1].strip()).isoformat()
+
+                sprint_details.append(sprint_info)
+
+        # Transform issue data
+        row_data = {
+            "key": issue["key"],
+            "summary": issue["fields"]["summary"],
+            "status": issue["fields"]["status"]["name"],
+            "created": parser.parse(issue["fields"]["created"]).isoformat(),
+            "sprint": sprint_details,  # Updated Sprint Data
+            "epic_link": issue["fields"].get("customfield_10014", ""),
+            "story_points": issue["fields"].get("customfield_10028", None),
+            "assignee": issue["fields"]["assignee"]["displayName"] if issue["fields"]["assignee"] else None,
+            "resolution": issue["fields"]["resolution"]["name"] if issue["fields"]["resolution"] else None,
+            "resolution_date": parser.parse(issue["fields"]["resolutiondate"]).isoformat()
+            if issue["fields"]["resolutiondate"] else None,
+        }
+
+        transformed_rows.append(row_data)
+
+    return transformed_rows
+
+# Function to insert data into BigQuery
+def insert_into_bigquery(rows):
+    table_ref = client.dataset(BQ_DATASET).table(BQ_TABLE)
+    errors = client.insert_rows_json(table_ref, rows)
+    if errors:
+        raise RuntimeError(f"Failed to insert rows: {errors}")
+
+# Main function to execute the pipeline
+def main():
+    print("Fetching Jira issues...")
+    issues = fetch_jira_issues()
+    print(f"Fetched {len(issues)} issues.")
+
+    print("Transforming data...")
+    transformed_rows = transform_issues(issues)
+
+    print("Inserting into BigQuery...")
+    insert_into_bigquery(transformed_rows)
+    print("Data successfully inserted into BigQuery.")
+
+if __name__ == "__main__":
+    main()
