@@ -1,0 +1,21 @@
+WITH sprint_progress AS (
+    SELECT
+        sprint.name AS sprint_name,
+        sprint.start_date AS sprint_start_date,
+        sprint.end_date AS sprint_end_date,
+        SUM(story_points) AS total_story_points,
+        SUM(CASE WHEN status IN ('To Do', 'In Progress') THEN story_points ELSE 0 END) AS remaining_story_points
+    FROM `your_project.your_dataset.your_table`,
+    UNNEST(sprint) AS sprint
+    GROUP BY sprint_name, sprint_start_date, sprint_end_date
+)
+
+SELECT
+    sprint_name,
+    sprint_start_date,
+    sprint_end_date,
+    total_story_points,
+    remaining_story_points,
+    SAFE_DIVIDE(total_story_points - remaining_story_points, DATE_DIFF(sprint_end_date, sprint_start_date, DAY)) AS burndown_rate
+FROM sprint_progress
+ORDER BY sprint_start_date;
