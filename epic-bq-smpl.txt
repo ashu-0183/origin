@@ -1,0 +1,6 @@
+SELECT 
+  COALESCE(epic_link, key) AS epic_key,  -- Use epic_link for stories, key for standalone epics
+  SUM(CASE WHEN epic_link IS NOT NULL THEN story_points ELSE 0 END) AS total_story_points_in_epic
+FROM `your_project.your_dataset.your_table`
+GROUP BY epic_key
+ORDER BY total_story_points_in_epic DESC;
