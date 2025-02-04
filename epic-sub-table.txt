@@ -1,0 +1,66 @@
+-- Epic Burndown Data Calculation
+WITH EpicData AS (
+  -- Aggregating data for each Epic
+  SELECT
+    epic.key AS epic_key,
+    epic.summary AS epic_summary,
+    epic.start_date AS epic_start_date,
+    epic.target_end_date AS epic_end_date,
+    COUNT(issue.key) AS issue_count,
+    SUM(CASE WHEN issue.status != 'Done' THEN issue.story_points ELSE 0 END) AS in_progress_points,
+    SUM(CASE WHEN issue.status = 'Done' THEN issue.story_points ELSE 0 END) AS completed_points,
+    SUM(issue.story_points) AS total_story_points
+  FROM
+    `your_project.your_dataset.jira_issues` AS issue
+  LEFT JOIN
+    `your_project.your_dataset.jira_issues` AS epic
+  ON
+    issue.epic_link = epic.key
+  WHERE
+    issue.epic_link IS NOT NULL  -- Only consider issues linked to epics
+  GROUP BY
+    epic.key, epic.summary, epic.start_date, epic.target_end_date
+),
+-- Additional calculations for the Epic Progress %
+FinalMetrics AS (
+  SELECT
+    epic_key,
+    epic_summary,
+    epic_start_date,
+    epic_end_date,
+    issue_count,
+    total_story_points,
+    completed_points,
+    in_progress_points,
+    -- Calculate the epic progress percentage
+    (completed_points / total_story_points) * 100 AS epic_progress_percentage,
+    -- Calculate the remaining story points
+    total_story_points - completed_points AS remaining_points,
+    -- Calculate the remaining days in the epic
+    DATE_DIFF(epic_end_date, CURRENT_DATE(), DAY) AS remaining_days_in_epic,
+    -- Classify the epic as 'On Track', 'At Risk', or 'Behind Schedule'
+    CASE
+      WHEN (completed_points / total_story_points) >= 0.75 THEN 'On Track'
+      WHEN (completed_points / total_story_points) >= 0.5 THEN 'At Risk'
+      ELSE 'Behind Schedule'
+    END AS epic_status
+  FROM
+    EpicData
+)
+-- Saving the final aggregated metrics as a separate table
+CREATE OR REPLACE TABLE `your_project.your_dataset.epic_burndown_metrics` AS
+SELECT
+  epic_key,
+  epic_summary,
+  epic_start_date,
+  epic_end_date,
+  issue_count,
+  total_story_points,
+  completed_points,
+  in_progress_points,
+  epic_progress_percentage,
+  remaining_points,
+  remaining_days_in_epic,
+  epic_status
+FROM
+  FinalMetrics;
