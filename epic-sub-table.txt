@@ -1,4 +1,5 @@
--- Epic Burndown Data Calculation
+-- Create or Replace the table `epic_burndown_metrics`
+CREATE OR REPLACE TABLE `your_project.your_dataset.epic_burndown_metrics` AS
 WITH EpicData AS (
   -- Aggregating data for each Epic
   SELECT
@@ -21,7 +22,6 @@ WITH EpicData AS (
   GROUP BY
     epic.key, epic.summary, epic.start_date, epic.target_end_date
 ),
--- Additional calculations for the Epic Progress %
 FinalMetrics AS (
   SELECT
     epic_key,
@@ -47,8 +47,8 @@ FinalMetrics AS (
   FROM
     EpicData
 )
--- Saving the final aggregated metrics as a separate table
-CREATE OR REPLACE TABLE `your_project.your_dataset.epic_burndown_metrics` AS
+
+-- Final table with all the calculated fields
 SELECT
   epic_key,
   epic_summary,
