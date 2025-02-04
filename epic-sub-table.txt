@@ -37,7 +37,7 @@ FinalMetrics AS (
     -- Calculate the remaining story points
     total_story_points - completed_points AS remaining_points,
     -- Calculate the remaining days in the epic
-    DATE_DIFF(epic_end_date, CURRENT_DATE(), DAY) AS remaining_days_in_epic,
+    DATE_DIFF(CAST(epic_end_date AS DATE), CURRENT_DATE(), DAY) AS remaining_days_in_epic,
     -- Classify the epic as 'On Track', 'At Risk', or 'Behind Schedule'
     CASE
       WHEN (completed_points / total_story_points) >= 0.75 THEN 'On Track'
