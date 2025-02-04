@@ -1,0 +1,29 @@
+WITH SprintDetails AS (
+  SELECT 
+    s.name AS sprint_name,
+    s.start_date,
+    s.end_date,
+    SUM(story_points) AS total_story_points
+  FROM `your_project.your_dataset.your_table`, UNNEST(sprint) AS s
+  WHERE s.start_date IS NOT NULL AND s.end_date IS NOT NULL
+  GROUP BY s.name, s.start_date, s.end_date
+),
+StoryPointsRemaining AS (
+  SELECT 
+    s.name AS sprint_name,
+    SUM(CASE WHEN status NOT IN ('Done', 'Closed') THEN story_points ELSE 0 END) AS remaining_story_points
+  FROM `your_project.your_dataset.your_table`, UNNEST(sprint) AS s
+  WHERE s.start_date IS NOT NULL AND s.end_date IS NOT NULL
+  GROUP BY s.name
+)
+SELECT 
+  sd.sprint_name,
+  sd.start_date,
+  sd.end_date,
+  sd.total_story_points,
+  sp.remaining_story_points,
+  DATE_DIFF(sd.end_date, sd.start_date, DAY) AS sprint_duration,
+  (sd.total_story_points - sp.remaining_story_points) / NULLIF(DATE_DIFF(sd.end_date, sd.start_date, DAY), 0) AS burndown_rate
+FROM SprintDetails sd
+JOIN StoryPointsRemaining sp ON sd.sprint_name = sp.sprint_name
+ORDER BY sd.start_date;
