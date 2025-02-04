@@ -1,0 +1,28 @@
+To build an effective **Epic Burndown** visualization in Looker Studio, we should break it down into multiple insights. Here’s a structured approach:
+
+### **1. Core Metrics to Display**
+- **Total Story Points in Epic/Release**
+- **Total Story Points Remaining**
+- **Epic Progress % (Burndown Formula)**
+- **Epic Start Date & Target End Date**
+- **Remaining Days in Epic**
+
+### **2. Visualizations**
+- **Epic Burndown Line Chart:**  
+  - X-axis: Days in Epic  
+  - Y-axis: Story Points Remaining  
+  - Shows how work is progressing over time.
+
+- **Epic Progress Bar:**  
+  - % Completion of the Epic  
+  - Color indicators (Red: Behind schedule, Yellow: At Risk, Green: On Track)
+
+- **Epic Story Point Breakdown Pie Chart:**  
+  - Completed vs. Remaining Story Points  
+  - Helps identify the proportion of work left.
+
+- **Epic Risk Indicator Table:**  
+  - Lists Epics that are behind schedule  
+  - Based on remaining story points vs. time left
+
+Would you like to start by writing the SQL query to extract the necessary data from BigQuery?
