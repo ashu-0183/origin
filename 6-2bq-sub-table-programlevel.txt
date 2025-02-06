@@ -1,3 +1,4 @@
+
 CREATE OR REPLACE TABLE `your_project.your_dataset.jira_common_table` AS
 WITH JiraData AS (
     SELECT 
@@ -6,7 +7,7 @@ WITH JiraData AS (
         status,
         COALESCE(story_points, 0) AS story_points,
         ARRAY_TO_STRING(components, ', ') AS squad,  -- Flatten components for filtering
-        fix_version AS pi,  -- Rename for clarity
+        fix_version,  -- Keep as an array for UNNEST
         created,
         start_date,
         target_end_date,
@@ -16,7 +17,7 @@ WITH JiraData AS (
 ),
 EpicMetrics AS (
     SELECT 
-        pi,
+        UNNEST(fix_version) AS pi,  -- Flatten fix_version array
         squad,
         COUNT(DISTINCT key) AS total_epics,
         SUM(CASE WHEN status = 'Done' THEN 1 ELSE 0 END) AS completed_epics
@@ -26,7 +27,7 @@ EpicMetrics AS (
 ),
 FeatureMetrics AS (
     SELECT 
-        pi,
+        UNNEST(fix_version) AS pi,  -- Flatten fix_version array
         squad,
         COUNT(DISTINCT key) AS total_features,
         SUM(CASE WHEN status = 'Done' THEN 1 ELSE 0 END) AS completed_features
@@ -40,7 +41,7 @@ SELECT
     jd.status,
     jd.story_points,
     jd.squad,
-    jd.pi,
+    UNNEST(jd.fix_version) AS pi,  -- Flatten fix_version array for final table
     jd.created,
     jd.start_date,
     jd.target_end_date,
@@ -49,5 +50,5 @@ SELECT
     fm.total_features,
     fm.completed_features
 FROM JiraData jd
-LEFT JOIN EpicMetrics em ON jd.pi = em.pi AND jd.squad = em.squad
-LEFT JOIN FeatureMetrics fm ON jd.pi = fm.pi AND jd.squad = fm.squad;
+LEFT JOIN EpicMetrics em ON UNNEST(jd.fix_version) = em.pi AND jd.squad = em.squad
+LEFT JOIN FeatureMetrics fm ON UNNEST(jd.fix_version) = fm.pi AND jd.squad = fm.squad;
