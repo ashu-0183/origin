@@ -1,0 +1,53 @@
+CREATE OR REPLACE TABLE `your_project.your_dataset.jira_common_table` AS
+WITH JiraData AS (
+    SELECT 
+        key,
+        issue_type,
+        status,
+        COALESCE(story_points, 0) AS story_points,
+        ARRAY_TO_STRING(components, ', ') AS squad,  -- Flatten components for filtering
+        fix_version AS pi,  -- Rename for clarity
+        created,
+        start_date,
+        target_end_date,
+        epic_link
+    FROM `your_project.your_dataset.jira_data`
+    WHERE issue_type IN ('Epic', 'Feature')  -- Filter only Epics & Features
+),
+EpicMetrics AS (
+    SELECT 
+        pi,
+        squad,
+        COUNT(DISTINCT key) AS total_epics,
+        SUM(CASE WHEN status = 'Done' THEN 1 ELSE 0 END) AS completed_epics
+    FROM JiraData
+    WHERE issue_type = 'Epic'
+    GROUP BY pi, squad
+),
+FeatureMetrics AS (
+    SELECT 
+        pi,
+        squad,
+        COUNT(DISTINCT key) AS total_features,
+        SUM(CASE WHEN status = 'Done' THEN 1 ELSE 0 END) AS completed_features
+    FROM JiraData
+    WHERE issue_type = 'Feature'
+    GROUP BY pi, squad
+)
+SELECT 
+    jd.key,
+    jd.issue_type,
+    jd.status,
+    jd.story_points,
+    jd.squad,
+    jd.pi,
+    jd.created,
+    jd.start_date,
+    jd.target_end_date,
+    em.total_epics,
+    em.completed_epics,
+    fm.total_features,
+    fm.completed_features
+FROM JiraData jd
+LEFT JOIN EpicMetrics em ON jd.pi = em.pi AND jd.squad = em.squad
+LEFT JOIN FeatureMetrics fm ON jd.pi = fm.pi AND jd.squad = fm.squad;
