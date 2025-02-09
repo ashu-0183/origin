@@ -14,7 +14,7 @@ Feature_Aggregation AS (
     SELECT 
         f.parent AS epic_key,  
         f.key AS feature_key,
-        f.fix_version,
+        f.fix_version AS feature_fix_version,
         ARRAY_TO_STRING(f.components, ', ') AS squads,
         COALESCE(sa.total_story_points, 0) AS total_story_points,
         COALESCE(sa.completed_story_points, 0) AS completed_story_points,
@@ -27,24 +27,24 @@ Feature_Aggregation AS (
 Epic_Aggregation AS (
     SELECT 
         fa.epic_key,
-        fa.fix_version,
+        fa.feature_fix_version AS epic_fix_version,
         fa.squads,
         SUM(fa.total_story_points) AS total_story_points,
         SUM(fa.completed_story_points) AS completed_story_points,
         SUM(fa.remaining_story_points) AS remaining_story_points
     FROM Feature_Aggregation fa
-    GROUP BY fa.epic_key, fa.fix_version, fa.squads
+    GROUP BY fa.epic_key, fa.feature_fix_version, fa.squads
 )
 SELECT 
-    key,
-    issue_type,
-    fix_version,
-    squads,
+    ji.key,
+    ji.issue_type,
+    COALESCE(ea.epic_fix_version, fa.feature_fix_version, ji.fix_version) AS fix_version,
+    ji.components AS squads,
     COALESCE(ea.total_story_points, fa.total_story_points, 0) AS total_story_points,
     COALESCE(ea.completed_story_points, fa.completed_story_points, 0) AS completed_story_points,
     COALESCE(ea.remaining_story_points, fa.remaining_story_points, 0) AS remaining_story_points
-FROM `your_project.your_dataset.jira_issues`
-LEFT JOIN Feature_Aggregation fa ON jira_issues.key = fa.feature_key
-LEFT JOIN Epic_Aggregation ea ON jira_issues.key = ea.epic_key
-WHERE issue_type IN ('Feature', 'Epic')
-ORDER BY issue_type, key;
+FROM `your_project.your_dataset.jira_issues` ji
+LEFT JOIN Feature_Aggregation fa ON ji.key = fa.feature_key
+LEFT JOIN Epic_Aggregation ea ON ji.key = ea.epic_key
+WHERE ji.issue_type IN ('Feature', 'Epic')
+ORDER BY ji.issue_type, ji.key;
