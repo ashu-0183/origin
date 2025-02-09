@@ -1,0 +1,45 @@
+WITH Story_Aggregation AS (
+    -- Aggregate story points at the Feature level
+    SELECT 
+        parent AS feature_key, 
+        SUM(story_points) AS total_story_points,
+        SUM(CASE WHEN status = 'Done' THEN story_points ELSE 0 END) AS completed_story_points
+    FROM `your_project.your_dataset.jira_issues`
+    WHERE issue_type = 'Story' AND parent IS NOT NULL
+    GROUP BY parent
+),
+Feature_Aggregation AS (
+    -- Aggregate story points at the Epic level
+    SELECT 
+        f.parent AS epic_key,  -- Feature's parent is the Epic
+        f.key AS feature_key,
+        COALESCE(sa.total_story_points, 0) AS total_story_points,
+        COALESCE(sa.completed_story_points, 0) AS completed_story_points,
+        (COALESCE(sa.total_story_points, 0) - COALESCE(sa.completed_story_points, 0)) AS remaining_story_points
+    FROM `your_project.your_dataset.jira_issues` f
+    LEFT JOIN Story_Aggregation sa
+    ON f.key = sa.feature_key
+    WHERE f.issue_type = 'Feature' AND f.parent IS NOT NULL
+),
+Epic_Aggregation AS (
+    -- Aggregate story points at the Epic level
+    SELECT 
+        fa.epic_key,
+        SUM(fa.total_story_points) AS total_story_points,
+        SUM(fa.completed_story_points) AS completed_story_points,
+        SUM(fa.remaining_story_points) AS remaining_story_points
+    FROM Feature_Aggregation fa
+    GROUP BY fa.epic_key
+)
+-- Final output showing story points for both Features and Epics
+SELECT 
+    key,
+    issue_type,
+    COALESCE(ea.total_story_points, fa.total_story_points, 0) AS total_story_points,
+    COALESCE(ea.completed_story_points, fa.completed_story_points, 0) AS completed_story_points,
+    COALESCE(ea.remaining_story_points, fa.remaining_story_points, 0) AS remaining_story_points
+FROM `your_project.your_dataset.jira_issues`
+LEFT JOIN Feature_Aggregation fa ON jira_issues.key = fa.feature_key
+LEFT JOIN Epic_Aggregation ea ON jira_issues.key = ea.epic_key
+WHERE issue_type IN ('Feature', 'Epic')
+ORDER BY issue_type, key;
